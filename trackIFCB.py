@@ -1,6 +1,8 @@
 import pandas as pd
 from scipy import interpolate
 from glob import glob
+from datetime import datetime
+import numpy as np
 
 def trackIFCB():
     """ Will prompt for inputs needed. Interpolates locations of IFCB samples
@@ -18,12 +20,12 @@ def trackIFCB():
 
     # get roi files from the IFCB directory; some conditionals to be able to take more inputs
     if ifcbdir[-1] == '/':
-        ifcbglob = sorted(glob(ifcbdir + '*.roi'))
+        ifcbglob = sorted(glob(ifcbdir + '*.hdr'))
     else:
-        ifcbglob = sorted(glob(ifcbdir + '/*.roi'))
+        ifcbglob = sorted(glob(ifcbdir + '/*.hdr'))
 
-    #parse IFCB files into a list of times and a list of filenames
-    times = []
+    # parse IFCB files into a dataframe with a datetime index with the corresponding filenames
+    ifcbtimes = []
     ifcbfiles = []
     for string in ifcbglob:
         singlefile = string.split('/')[-1]
@@ -32,14 +34,30 @@ def trackIFCB():
         a = timestr.split('D')[1]
         b = a.split('T')
         c = b[0] + ' ' + b[1].split('_')[0]
-        times.append(c)
-        #will need to make time into actual datetime objects
-        #something along mcv_index = mcv_index.set_index(pd.DatetimeIndex(mctimes))
+        ifcbtimes.append(c[:-2])  # note: drops seconds
+    ifcbfiles_df = pd.DataFrame(ifcbfiles)
+    ifcbfiles_df = ifcbfiles_df.set_index(pd.DatetimeIndex(ifcbtimes))
+    ifcbfiles_df.columns = ['file']
 
-    # interpolate ship track coordinate for the time of a specific IFCB sample
+    # parse ship track coordinates into a dataframe with a datetime index and other relevant info (incl. lat and long)
+    # the time resolution of ship track data is every minute, so no interpolation needed for matching to IFCB files
     track = pd.read_table(trackfile)
-    track = track.set_index(track['time'])
-    #interpolate.interp1d() # match IFCB with track data #idk how this works but x would be IFCBtimes, y would be track data
+    tracktimes = []
+    for item in track['time']:
+        tracktimes.append(datetime.strptime(item, '%Y-%m-%d %H:%M:%S.%f').replace(second = 0, microsecond = 0))  # also drops seconds
+    track_df = track.set_index(pd.DatetimeIndex(tracktimes))
 
-    tracktimes = list(track['time'])
-    #somedf.to_csv(output, header=(ship + ' ' + location, tracktimes[0], tracktimes[-1]) #rename somedf
+    # loops through the dataframe of IFCB files, taking the time of the file and matching it to the coordinates found ship track dataframe
+    lat = []
+    long = []
+    for n in range(0, np.shape(ifcbfiles_df)[0]):
+        searchtime = ifcbfiles_df.index[n]
+        found = track_df.loc[searchtime]
+        lat.append(found['latitude'])
+        long.append(found['longitude'])
+
+    matchedloc = pd.concat([pd.DataFrame(ifcbfiles), pd.DataFrame(lat), pd.DataFrame(long)], axis=1) # uses ifcbfiles instead of ifcbfiles_df because there is no attached datetime index that would complicate the concatination. Order should be the same though
+    matchedloc.to_csv(output, header=(ship + ' ' + location, tracktimes[0], tracktimes[-1]))
+    
+    print('Done') 
+    return
