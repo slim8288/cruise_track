@@ -34,7 +34,7 @@ def trackIFCB():
         a = timestr.split('D')[1]
         b = a.split('T')
         c = b[0] + ' ' + b[1].split('_')[0]
-        ifcbtimes.append(c[:-2])  # note: drops seconds
+        ifcbtimes.append(c) #drop sec [:-2])  
     ifcbfiles_df = pd.DataFrame(ifcbfiles)
     ifcbfiles_df = ifcbfiles_df.set_index(pd.DatetimeIndex(ifcbtimes))
     ifcbfiles_df.columns = ['file']
@@ -44,17 +44,21 @@ def trackIFCB():
     track = pd.read_table(trackfile)
     tracktimes = []
     for item in track['time']:
-        tracktimes.append(datetime.strptime(item, '%Y-%m-%d %H:%M:%S.%f').replace(second = 0, microsecond = 0))  # also drops seconds
+        tracktimes.append(datetime.strptime(item, '%Y-%m-%d %H:%M:%S'))
     track_df = track.set_index(pd.DatetimeIndex(tracktimes))
+    track_upsamp = track_df.resample('1S').asfreq().interpolate(method='linear')
 
     # loops through the dataframe of IFCB files, taking the time of the file and matching it to the coordinates found ship track dataframe
     lat = []
     long = []
     for n in range(0, np.shape(ifcbfiles_df)[0]):
         searchtime = ifcbfiles_df.index[n]
-        found = track_df.loc[searchtime]
-        lat.append(found['latitude'])
-        long.append(found['longitude'])
+        if searchtime in track_upsamp.index:
+            found = track_upsamp.loc[searchtime]
+            lat.append(found['latitude'])
+            long.append(found['longitude'])
+        else:
+            print(searchtime, 'not in cruise track data')
 
     matchedloc = pd.concat([pd.DataFrame(ifcbfiles), pd.DataFrame(lat), pd.DataFrame(long)], axis=1) # uses ifcbfiles instead of ifcbfiles_df because there is no attached datetime index that would complicate the concatination. Order should be the same though
     matchedloc.to_csv(output, header=(ship + ' ' + location, tracktimes[0], tracktimes[-1]))
