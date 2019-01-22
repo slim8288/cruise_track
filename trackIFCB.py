@@ -34,13 +34,13 @@ def trackIFCB():
         a = timestr.split('D')[1]
         b = a.split('T')
         c = b[0] + ' ' + b[1].split('_')[0]
-        ifcbtimes.append(c) #drop sec [:-2])  
+        ifcbtimes.append(c) 
     ifcbfiles_df = pd.DataFrame(ifcbfiles)
     ifcbfiles_df = ifcbfiles_df.set_index(pd.DatetimeIndex(ifcbtimes))
     ifcbfiles_df.columns = ['file']
 
     # parse ship track coordinates into a dataframe with a datetime index and other relevant info (incl. lat and long)
-    # the time resolution of ship track data is every minute, so no interpolation needed for matching to IFCB files
+    # requires interpolating the ship track data for every second to exactly match with IFCB file times
     track = pd.read_table(trackfile)
     tracktimes = []
     for item in track['time']:
