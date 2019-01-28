@@ -61,7 +61,10 @@ def trackIFCB():
             print(searchtime, 'not in cruise track data')
 
     matchedloc = pd.concat([pd.DataFrame(ifcbfiles), pd.DataFrame(lat), pd.DataFrame(long)], axis=1) # uses ifcbfiles instead of ifcbfiles_df because there is no attached datetime index that would complicate the concatination. Order should be the same though
-    matchedloc.to_csv(output, header=(ship + ' ' + location, tracktimes[0], tracktimes[-1]))
+    hdr_meta = [ship + ' ' + location, tracktimes[0], tracktimes[-1]]  # metadata about this cruise
+    hdr = ['ifcbfile', 'latitude', 'longitude']  # actual column names
+    matchedloc.columns = pd.MultiIndex.from_tuples(zip(hdr_meta, hdr))
+    matchedloc.to_csv(output) #, header=(ship + ' ' + location, tracktimes[0], tracktimes[-1]))
     
     print('Done') 
     return
