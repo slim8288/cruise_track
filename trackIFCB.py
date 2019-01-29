@@ -1,3 +1,5 @@
+# works with Python 2, *should* work with Python 3
+
 import pandas as pd
 from scipy import interpolate
 from glob import glob
@@ -7,9 +9,9 @@ import numpy as np
 def trackIFCB():
     """ Will prompt for inputs needed. Interpolates locations of IFCB samples
         from the cruise track data. Output: will save a csv file in designated
-        location; header line with vessel and approximate survey area, start
-        datetime, end datetimes for the cruise effort; lines are [IFCB filename],
-        lat,lon
+        location; 1st header line with vessel and approximate survey area, start
+        datetime, end datetimes for the cruise effort; 2nd header line describes
+        columns
     """
     # takes inputs from user
     trackfile = input('path for cruise track file (.txt)? ')
