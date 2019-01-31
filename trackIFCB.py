@@ -1,17 +1,19 @@
-# works with Python 2, *should* work with Python 3
+# works with Python 2
 
 import pandas as pd
 from scipy import interpolate
 from glob import glob
 from datetime import datetime
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
 
 def trackIFCB():
     """ Will prompt for inputs needed. Interpolates locations of IFCB samples
-        from the cruise track data. Output: will save a csv file in designated
-        location; 1st header line with vessel and approximate survey area, start
-        datetime, end datetimes for the cruise effort; 2nd header line describes
-        columns
+        from the cruise track data.
+        Output: will save a csv file in designated location; 1st header line
+        with vessel and approximate survey area, start datetime, end datetimes
+        for the cruise effort; 2nd header line describes columns
     """
     # takes inputs from user
     trackfile = input('path for cruise track file (.txt)? ')
@@ -69,4 +71,24 @@ def trackIFCB():
     matchedloc.to_csv(output) #, header=(ship + ' ' + location, tracktimes[0], tracktimes[-1]))
     
     print('Done') 
+    return
+
+
+def mapsamples(file, latmin=40, latmax=48, lonmin=-73, lonmax=-63):
+    """ Required input: path to .csv file with IFCB sample coordinates, header
+                        should have latitude and longitude in 2nd line
+        Default inputs: latmin=40, latmax=48, lonmin=-73, lonmax=-63
+        Output: Plots a map of the IFCB sample locations
+    """
+    samples = pd.read_csv(file, header=[1])
+    lat = np.array(samples['latitude'])
+    lon = np.array(samples['longitude'])
+    m = Basemap(projection='merc', llcrnrlat=latmin, urcrnrlat=latmax, llcrnrlon=lonmin, urcrnrlon=lonmax,resolution='i')
+    m.drawcoastlines()
+    m.fillcontinents(color='#FFDDCC',lake_color='#DDEEFF')
+    m.drawcoastlines()
+    m.drawmapboundary(fill_color='#DDEEFF')
+    m.scatter(lon, lat, latlon=True, c='darkgreen', s=3)
+    plt.title(file.split('/')[-1].split('.csv')[0])
+    plt.show()
     return
