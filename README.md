@@ -1,5 +1,5 @@
 # cruise_track
-Code for matching IFCB files to ship track data. Also hosts the data that I have so far.
+Code for matching IFCB files to ship track data and plotting results. Also hosts the data that I have so far.
 
 .txt files are ship track data files, put through gpsvisualizer.com
 
