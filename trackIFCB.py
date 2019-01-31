@@ -88,6 +88,8 @@ def mapsamples(file, latmin=40, latmax=48, lonmin=-73, lonmax=-63):
     m.fillcontinents(color='#FFDDCC',lake_color='#DDEEFF')
     m.drawcoastlines()
     m.drawmapboundary(fill_color='#DDEEFF')
+    m.drawstates()
+    m.drawcountries()
     m.scatter(lon, lat, latlon=True, c='darkgreen', s=3)
     plt.title(file.split('/')[-1].split('.csv')[0])
     plt.show()
